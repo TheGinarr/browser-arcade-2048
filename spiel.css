@@ -1,0 +1,163 @@
+/* ============================================================
+   2048 · spielspezifische Styles
+   ------------------------------------------------------------
+   Das gemeinsame Design (Farben, HUD, Knöpfe …) steckt in
+   ../assets/style.css. Hier liegt nur, was nur 2048 braucht:
+   Brett, Kacheln, Farbverlauf der Werte, Overlay.
+
+   Aufbau der Spielfläche (von unten nach oben):
+     .brett-huelle   Container + Bezugsgröße für alle Maße
+       .brett        dunkle Fläche mit Padding
+         .zellen     16 leere Zellen (CSS-Grid)      ← Ebene 1
+         .kacheln    absolut darüber, hält Kacheln    ← Ebene 2
+       .overlay      "2048 erreicht!"-Hinweis
+   ============================================================ */
+
+/* Reiner Screenreader-Text: optisch weg, aber vorlesbar */
+.nur-sr{
+  position:absolute;width:1px;height:1px;margin:-1px;padding:0;
+  overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;
+}
+
+/* ---------- Brett ---------------------------------------------
+   container-type:inline-size macht die Hülle zum "Container":
+   Alle Kinder können dann mit der Einheit cqw (= 1 % der
+   Container-Breite) rechnen. So skaliert ALLES (Abstände,
+   Schrift, Kacheln) mit der Brettbreite – am Handy genauso
+   wie am Desktop, ganz ohne JavaScript-Messungen. */
+.brett-huelle{
+  --schiebe:.11s;                 /* Dauer der Gleit-Animation (muss zu SCHIEBE_MS in game.js passen!) */
+  position:relative;
+  width:100%;max-width:480px;margin:0 auto;
+  container-type:inline-size;
+}
+.brett{
+  --abstand:2.6cqw;               /* Lücke zwischen den Zellen */
+  position:relative;
+  aspect-ratio:1;                 /* immer quadratisch */
+  padding:var(--abstand);
+  border-radius:14px;
+  background:#0b0b1a;
+  border:1px solid var(--line);
+  box-shadow:inset 0 0 30px #00000088;
+  touch-action:none;              /* Wischen auf dem Brett scrollt NICHT die Seite */
+  user-select:none;-webkit-user-select:none;
+}
+/* Ältere Browser ohne Container-Einheiten: feste Pixelwerte */
+@supports not (width:1cqw){
+  .brett{--abstand:10px}
+}
+
+/* Ebene 1: Hintergrund-Grid */
+.zellen{
+  display:grid;height:100%;
+  grid-template-columns:repeat(4,1fr);
+  grid-template-rows:repeat(4,1fr);
+  gap:var(--abstand);
+}
+.zelle{border-radius:8px;background:color-mix(in srgb,var(--panel2) 70%,#000)}
+
+/* Ebene 2: genauso groß wie der Zellbereich (inset = Padding des Bretts) */
+.kacheln{position:absolute;inset:var(--abstand)}
+
+/* ---------- Kachel (äußeres Element = Position) ----------------
+   Breite = (Gesamtbreite − 3 Lücken) / 4 = genau eine Zelle.
+   translate(100 % + Lücke) verschiebt also um genau EINE Zelle:
+   Prozentwerte in translate beziehen sich auf die Kachel selbst. */
+.kachel{
+  position:absolute;top:0;left:0;
+  width:calc((100% - 3 * var(--abstand)) / 4);
+  height:calc((100% - 3 * var(--abstand)) / 4);
+  /* --z (Zeile) und --s (Spalte) setzt game.js pro Kachel */
+  transform:translate(
+    calc(var(--s) * (100% + var(--abstand))),
+    calc(var(--z) * (100% + var(--abstand)))
+  );
+  transition:transform var(--schiebe) cubic-bezier(.4,0,.2,1);
+  will-change:transform;
+}
+
+/* ---------- Kachel (inneres Element = Aussehen + Effekte) ------ */
+.kachel-innen{
+  width:100%;height:100%;
+  display:grid;place-items:center;
+  border-radius:8px;
+  font-family:var(--pixel);
+  font-size:1.2rem;                       /* Fallback ohne cqw */
+  font-size:7cqw;
+  line-height:1;
+  color:var(--txt);
+  background:var(--panel2);
+  box-shadow:inset 0 0 0 1px #ffffff12;
+}
+/* Schriftgröße nach Stellenzahl: Press Start 2P ist eine breite
+   Schrift (1 Zeichen = 1 em), deshalb schrumpfen wir bei langen Zahlen. */
+.kachel-innen.ziffern-3{font-size:.95rem;font-size:5.6cqw}
+.kachel-innen.ziffern-4{font-size:.8rem;font-size:4.6cqw}
+.kachel-innen.ziffern-5{font-size:.7rem;font-size:3.8cqw}
+.kachel-innen.ziffern-6{font-size:.6rem;font-size:3.2cqw}
+
+/* Neue Kachel: poppt auf. Die Verzögerung = Gleitdauer, damit sie
+   erst erscheint, wenn die anderen Kacheln an Ort und Stelle sind.
+   backwards = schon während der Verzögerung den Startzustand zeigen. */
+@keyframes kachel-pop{
+  from{transform:scale(0);opacity:0}
+  60%{transform:scale(1.1);opacity:1}
+  to{transform:scale(1)}
+}
+.kachel-innen.pop{animation:kachel-pop .22s cubic-bezier(.33,1,.68,1) var(--schiebe) backwards}
+
+/* Verschmelzung: kurzer Puls */
+@keyframes kachel-puls{
+  50%{transform:scale(1.22)}
+}
+.kachel-innen.puls{animation:kachel-puls .2s ease}
+
+/* ---------- Farbverlauf: panel2 → cyan → gold -------------------
+   color-mix mischt zwei Farben in einem Prozentsatz. Je höher der
+   Wert, desto mehr Cyan (bis 128), dann mehr Gold (bis 2048). */
+.kachel-2   {background:color-mix(in srgb,var(--cyan)  6%,var(--panel2))}
+.kachel-4   {background:color-mix(in srgb,var(--cyan) 14%,var(--panel2))}
+.kachel-8   {background:color-mix(in srgb,var(--cyan) 26%,var(--panel2))}
+.kachel-16  {background:color-mix(in srgb,var(--cyan) 40%,var(--panel2))}
+/* ab 32 ist der Hintergrund hell genug für dunkle Schrift (Kontrast!) */
+.kachel-32  {background:color-mix(in srgb,var(--cyan) 56%,var(--panel2));color:#05050c}
+.kachel-64  {background:color-mix(in srgb,var(--cyan) 78%,var(--panel2));color:#05050c}
+.kachel-128 {background:var(--cyan);color:#05050c;box-shadow:0 0 14px color-mix(in srgb,var(--cyan) 55%,transparent)}
+.kachel-256 {background:color-mix(in srgb,var(--gold) 28%,var(--cyan));color:#05050c;box-shadow:0 0 16px color-mix(in srgb,var(--cyan) 45%,transparent)}
+.kachel-512 {background:color-mix(in srgb,var(--gold) 55%,var(--cyan));color:#05050c;box-shadow:0 0 18px color-mix(in srgb,var(--gold) 35%,transparent)}
+.kachel-1024{background:color-mix(in srgb,var(--gold) 80%,var(--cyan));color:#05050c;box-shadow:0 0 20px color-mix(in srgb,var(--gold) 50%,transparent)}
+.kachel-2048{background:var(--gold);color:#05050c;box-shadow:0 0 26px color-mix(in srgb,var(--gold) 70%,transparent)}
+/* ab 4096: eine generische Klasse (sonst bräuchte man unendlich viele) */
+.kachel-gross{background:linear-gradient(135deg,var(--gold),var(--pink));color:#05050c;box-shadow:0 0 28px color-mix(in srgb,var(--pink) 55%,transparent)}
+
+/* ---------- Overlay "2048 erreicht!" -------------------------- */
+.overlay{
+  position:absolute;inset:0;z-index:5;
+  display:grid;place-items:center;padding:16px;
+  border-radius:14px;
+  background:color-mix(in srgb,var(--bg) 78%,transparent);
+  backdrop-filter:blur(3px);
+  opacity:0;visibility:hidden;            /* visibility:hidden = nicht fokussierbar, nicht klickbar */
+  transition:opacity .3s ease,visibility 0s linear .3s;
+}
+.overlay.sichtbar{
+  opacity:1;visibility:visible;
+  transition:opacity .3s ease,visibility 0s;
+}
+.overlay-box{
+  text-align:center;padding:24px;border-radius:16px;
+  background:var(--panel);border:1px solid color-mix(in srgb,var(--gold) 55%,var(--line));
+  box-shadow:0 0 40px color-mix(in srgb,var(--gold) 28%,transparent);
+  transform:scale(.94);transition:transform .3s cubic-bezier(.33,1,.68,1);
+}
+.overlay.sichtbar .overlay-box{transform:none}
+.overlay-box h2{margin:0 0 8px;font-family:var(--pixel);font-weight:400;font-size:clamp(.9rem,4.5cqw,1.2rem);line-height:1.5;color:var(--gold)}
+.overlay-box p{margin:0 0 16px;color:var(--mut)}
+.overlay-aktionen{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+.overlay{--ak:var(--gold)}                /* Knöpfe im Overlay golden */
+
+/* Bei reduzierter Bewegung: keine Wartezeit für das Erscheinen neuer Kacheln */
+@media (prefers-reduced-motion:reduce){
+  .brett-huelle{--schiebe:0s}
+}
