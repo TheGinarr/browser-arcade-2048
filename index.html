@@ -1,90 +1,190 @@
 <!doctype html>
 <html lang="de">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#07070f">
-  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./assets/style.css">
-  <!-- spielspezifische Styles (Kacheln, Brett) – das gemeinsame Design bleibt in ../assets/style.css -->
-  <link rel="stylesheet" href="./spiel.css">
-  <title>2048 · Browser-Arcade</title>
-  <meta name="description" content="2048 im Browser: Kacheln schieben, gleiche Zahlen verschmelzen und die 2048 erreichen. Mit Pfeiltasten, WASD oder Wischen. Ohne Konto und Cookies.">
-</head>
-<body style="--ak:var(--cyan)">
-  <div class="raster" aria-hidden="true"></div>
-  <a class="skip-link" href="#main">Zum Inhalt springen</a>
-  <header class="kopf"><nav class="container nav" aria-label="Hauptnavigation">
-    <a class="marke" href="./"><span class="logo">▶</span>GAMES</a>
-    <div class="nav-links"><a href="./impressum.html">Impressum</a><a href="./datenschutz.html">Datenschutz</a></div>
-  </nav></header>
-  <main id="main" class="container">
-    <div class="spiel-kopf">
-      <div><h1>2048</h1><p class="unterzeile">Schiebe die Kacheln, verschmelze gleiche Zahlen und erreiche die 2048.</p></div>
-      <button class="knopf" id="neu" type="button">Neu</button>
-    </div>
-
-    <div class="hud">
-      <div class="hud-feld"><div class="label">Punkte</div><div class="wert" id="hud-punkte">0</div></div>
-      <div class="hud-feld"><div class="label">Bester</div><div class="wert" id="hud-bester">0</div></div>
-    </div>
-
-    <div class="buehne">
-      <!-- brett-huelle = Container für die Größen-Einheiten (cqw), s. spiel.css -->
-      <div class="brett-huelle" id="huelle">
-        <div class="brett" id="brett" role="group" aria-label="Spielbrett, 4 mal 4 Felder">
-          <!-- Ebene 1: die 16 leeren Hintergrundzellen (nur Deko, bewegen sich nie) -->
-          <div class="zellen" aria-hidden="true">
-            <div class="zelle"></div><div class="zelle"></div><div class="zelle"></div><div class="zelle"></div>
-            <div class="zelle"></div><div class="zelle"></div><div class="zelle"></div><div class="zelle"></div>
-            <div class="zelle"></div><div class="zelle"></div><div class="zelle"></div><div class="zelle"></div>
-            <div class="zelle"></div><div class="zelle"></div><div class="zelle"></div><div class="zelle"></div>
-          </div>
-          <!-- Ebene 2: die Kacheln – werden von game.js hier hineingesetzt -->
-          <div class="kacheln" id="kacheln"></div>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#07070f" />
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./assets/style.css" />
+    <!-- spielspezifische Styles (Kacheln, Brett) – das gemeinsame Design bleibt in ../assets/style.css -->
+    <link rel="stylesheet" href="./spiel.css" />
+    <title>2048 · Browser-Arcade</title>
+    <meta
+      name="description"
+      content="2048 im Browser: Kacheln schieben, gleiche Zahlen verschmelzen und die 2048 erreichen. Mit Pfeiltasten, WASD oder Wischen. Ohne Konto und Cookies."
+    />
+  </head>
+  <body style="--ak: var(--cyan)">
+    <div class="raster" aria-hidden="true"></div>
+    <a class="skip-link" href="#main">Zum Inhalt springen</a>
+    <header class="kopf">
+      <nav class="container nav" aria-label="Hauptnavigation">
+        <a class="marke" href="./"><span class="logo">▶</span>GAMES</a>
+        <div class="nav-links">
+          <a href="./impressum.html">Impressum</a><a href="./datenschutz.html">Datenschutz</a>
         </div>
+      </nav>
+    </header>
+    <main id="main" class="container">
+      <div class="spiel-kopf">
+        <div>
+          <h1>2048</h1>
+          <p class="unterzeile">
+            Schiebe die Kacheln, verschmelze gleiche Zahlen und erreiche die 2048.
+          </p>
+        </div>
+        <button class="knopf" id="neu" type="button">Neu</button>
+      </div>
 
-        <!-- Hinweis, wenn die 2048 erreicht wurde (liegt über dem Brett) -->
-        <div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-labelledby="overlay-titel">
-          <div class="overlay-box">
-            <h2 id="overlay-titel">2048 erreicht!</h2>
-            <p>Weiterspielen?</p>
-            <div class="overlay-aktionen">
-              <button class="knopf primaer" id="weiter" type="button">Weiterspielen</button>
-              <button class="knopf" id="overlay-neu" type="button">Neues Spiel</button>
+      <div class="hud">
+        <div class="hud-feld">
+          <div class="label">Punkte</div>
+          <div class="wert" id="hud-punkte">0</div>
+        </div>
+        <div class="hud-feld">
+          <div class="label">Bester</div>
+          <div class="wert" id="hud-bester">0</div>
+        </div>
+      </div>
+
+      <div class="buehne">
+        <!-- brett-huelle = Container für die Größen-Einheiten (cqw), s. spiel.css -->
+        <div class="brett-huelle" id="huelle">
+          <div class="brett" id="brett" role="group" aria-label="Spielbrett, 4 mal 4 Felder">
+            <!-- Ebene 1: die 16 leeren Hintergrundzellen (nur Deko, bewegen sich nie) -->
+            <div class="zellen" aria-hidden="true">
+              <div class="zelle"></div>
+              <div class="zelle"></div>
+              <div class="zelle"></div>
+              <div class="zelle"></div>
+              <div class="zelle"></div>
+              <div class="zelle"></div>
+              <div class="zelle"></div>
+              <div class="zelle"></div>
+              <div class="zelle"></div>
+              <div class="zelle"></div>
+              <div class="zelle"></div>
+              <div class="zelle"></div>
+              <div class="zelle"></div>
+              <div class="zelle"></div>
+              <div class="zelle"></div>
+              <div class="zelle"></div>
+            </div>
+            <!-- Ebene 2: die Kacheln – werden von game.js hier hineingesetzt -->
+            <div class="kacheln" id="kacheln"></div>
+          </div>
+
+          <!-- Hinweis, wenn die 2048 erreicht wurde (liegt über dem Brett) -->
+          <div
+            class="overlay"
+            id="overlay"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="overlay-titel"
+          >
+            <div class="overlay-box">
+              <h2 id="overlay-titel">2048 erreicht!</h2>
+              <p>Weiterspielen?</p>
+              <div class="overlay-aktionen">
+                <button class="knopf primaer" id="weiter" type="button">Weiterspielen</button>
+                <button class="knopf" id="overlay-neu" type="button">Neues Spiel</button>
+              </div>
             </div>
           </div>
         </div>
+        <!-- Unsichtbare Ansage für Screenreader (Spielende, 2048 erreicht) -->
+        <p class="nur-sr" id="ansage" aria-live="polite"></p>
       </div>
-      <!-- Unsichtbare Ansage für Screenreader (Spielende, 2048 erreicht) -->
-      <p class="nur-sr" id="ansage" aria-live="polite"></p>
-    </div>
 
-    <p class="steuerung">Steuerung: <kbd>←</kbd> <kbd>↑</kbd> <kbd>→</kbd> <kbd>↓</kbd> oder <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd>. Am Handy einfach über das Brett wischen. Gleiche Zahlen verschmelzen beim Aufeinandertreffen.</p>
+      <p class="steuerung">
+        Steuerung: <kbd>←</kbd> <kbd>↑</kbd> <kbd>→</kbd> <kbd>↓</kbd> oder <kbd>W</kbd>
+        <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd>. Am Handy einfach über das Brett wischen. Gleiche
+        Zahlen verschmelzen beim Aufeinandertreffen.
+      </p>
 
-    <section style="max-width:420px;margin-top:36px"><h2 style="font-family:var(--pixel);font-weight:400;font-size:.85rem">Lokale Top 3</h2><div id="topliste"></div>
-      <button class="knopf" id="reset" style="margin-top:10px">Spielstand zurücksetzen</button></section>
+      <section style="max-width: 420px; margin-top: 36px">
+        <h2 style="font-family: var(--pixel); font-weight: 400; font-size: 0.85rem">
+          Lokale Top 3
+        </h2>
+        <div id="topliste"></div>
+        <button class="knopf" id="reset" style="margin-top: 10px">Spielstand zurücksetzen</button>
+      </section>
 
-    <section class="lernbox"><details open><summary>Anleitung &amp; Regeln</summary>
-      <p><strong>Ziel:</strong> Schiebe die Kacheln so zusammen, dass die Kachel 2048 entsteht – oder eine noch größere.</p>
-      <ul>
-        <li>Pro Zug rutschen ALLE Kacheln in eine Richtung (Pfeiltasten, <code>WASD</code> oder Wischen).</li>
-        <li>Stoßen zwei gleiche Zahlen zusammen, verschmelzen sie zu ihrer Summe – jede Kachel aber nur einmal pro Zug.</li>
-        <li>Nach jedem Zug erscheint eine neue 2 (selten eine 4) auf einem freien Feld.</li>
-        <li>Punkte gibt es für jede Verschmelzung. Game Over, wenn kein Zug mehr möglich ist.</li>
-        <li>Tipp: Sammle die größte Kachel in einer Ecke und halte eine Richtung möglichst tabu.</li>
-      </ul>
-    </details></section>
+      <section class="lernbox">
+        <details open>
+          <summary>Anleitung &amp; Regeln</summary>
+          <p>
+            <strong>Ziel:</strong> Schiebe die Kacheln so zusammen, dass die Kachel 2048 entsteht –
+            oder eine noch größere.
+          </p>
+          <ul>
+            <li>
+              Pro Zug rutschen ALLE Kacheln in eine Richtung (Pfeiltasten, <code>WASD</code> oder
+              Wischen).
+            </li>
+            <li>
+              Stoßen zwei gleiche Zahlen zusammen, verschmelzen sie zu ihrer Summe – jede Kachel
+              aber nur einmal pro Zug.
+            </li>
+            <li>Nach jedem Zug erscheint eine neue 2 (selten eine 4) auf einem freien Feld.</li>
+            <li>
+              Punkte gibt es für jede Verschmelzung. Game Over, wenn kein Zug mehr möglich ist.
+            </li>
+            <li>
+              Tipp: Sammle die größte Kachel in einer Ecke und halte eine Richtung möglichst tabu.
+            </li>
+          </ul>
+        </details>
+      </section>
 
-    <section class="lernbox"><details><summary>Wie funktioniert der Code?</summary>
-      <p><strong>Zwei Ebenen statt einem Grid.</strong> Die grauen Hintergrundzellen sind ein normales CSS-Grid. Die Kacheln sind <em>eigene</em> Elemente, die absolut darüber liegen und per <code>transform: translate(...)</code> an ihren Platz geschoben werden. Nur so kann der Browser eine Kachel weich von A nach B gleiten lassen: Ein Element, das sich im Grid einfach neu einsortiert, würde springen.</p>
-      <p><strong>Die Spiellogik kennt kein DOM.</strong> <code>schiebeZeileLinks()</code> bekommt vier Zahlen und liefert die verschobene Zeile samt Punkten zurück. Weil sie nichts anfasst, ist sie leicht testbar (<code>[2,2,4,0]</code> wird zu <code>[4,4,0,0]</code>). Eine Kachel verschmilzt pro Zug nur einmal: Dafür merkt sich die Funktion, welche Teile schon verschmolzen sind.</p>
-      <p><strong>Vier Richtungen, eine Funktion.</strong> <code>linienFuer()</code> liefert die Zeilen bzw. Spalten so geordnet, dass die Zielseite immer vorne liegt. Danach reicht <em>eine</em> Schiebe-Funktion für links, rechts, hoch und runter.</p>
-      <p><strong>Weiche Animation.</strong> Die äußere Kachel bewegt sich per CSS-<code>transition</code> auf <code>transform</code>, die innere Kachel macht Pop (neue Kachel) und Puls (Verschmelzung) per <code>@keyframes</code>. Die Trennung ist nötig, weil beide Effekte <code>transform</code> verwenden würden und sich sonst überschreiben.</p>
-      <p><strong>Speichern und Wischen.</strong> Nach jedem Zug landen Brett und Punkte per <code>speichere()</code> im localStorage; beim Laden wird der Stand geprüft (<code>spielstandLesen()</code>) und fortgesetzt. Wischgesten kommen aus den <em>Pointer Events</em> (<code>pointerdown</code> und <code>pointerup</code>): Aus dem Weg zwischen beiden ergibt sich die Richtung.</p>
-    </details></section>
-  </main>
-  <footer class="fuss"><div class="container fuss-in"><span>Browser-Arcade · Open Source</span><nav aria-label="Rechtliches"><a href="./impressum.html">Impressum</a><a href="./datenschutz.html">Datenschutz</a></nav></div></footer>
-  <script type="module" src="./game.js"></script>
-</body>
+      <section class="lernbox">
+        <details>
+          <summary>Wie funktioniert der Code?</summary>
+          <p>
+            <strong>Zwei Ebenen statt einem Grid.</strong> Die grauen Hintergrundzellen sind ein
+            normales CSS-Grid. Die Kacheln sind <em>eigene</em> Elemente, die absolut darüber liegen
+            und per <code>transform: translate(...)</code> an ihren Platz geschoben werden. Nur so
+            kann der Browser eine Kachel weich von A nach B gleiten lassen: Ein Element, das sich im
+            Grid einfach neu einsortiert, würde springen.
+          </p>
+          <p>
+            <strong>Die Spiellogik kennt kein DOM.</strong> <code>schiebeZeileLinks()</code> bekommt
+            vier Zahlen und liefert die verschobene Zeile samt Punkten zurück. Weil sie nichts
+            anfasst, ist sie leicht testbar (<code>[2,2,4,0]</code> wird zu <code>[4,4,0,0]</code>).
+            Eine Kachel verschmilzt pro Zug nur einmal: Dafür merkt sich die Funktion, welche Teile
+            schon verschmolzen sind.
+          </p>
+          <p>
+            <strong>Vier Richtungen, eine Funktion.</strong> <code>linienFuer()</code> liefert die
+            Zeilen bzw. Spalten so geordnet, dass die Zielseite immer vorne liegt. Danach reicht
+            <em>eine</em> Schiebe-Funktion für links, rechts, hoch und runter.
+          </p>
+          <p>
+            <strong>Weiche Animation.</strong> Die äußere Kachel bewegt sich per CSS-<code
+              >transition</code
+            >
+            auf <code>transform</code>, die innere Kachel macht Pop (neue Kachel) und Puls
+            (Verschmelzung) per <code>@keyframes</code>. Die Trennung ist nötig, weil beide Effekte
+            <code>transform</code> verwenden würden und sich sonst überschreiben.
+          </p>
+          <p>
+            <strong>Speichern und Wischen.</strong> Nach jedem Zug landen Brett und Punkte per
+            <code>speichere()</code> im localStorage; beim Laden wird der Stand geprüft
+            (<code>spielstandLesen()</code>) und fortgesetzt. Wischgesten kommen aus den
+            <em>Pointer Events</em> (<code>pointerdown</code> und <code>pointerup</code>): Aus dem
+            Weg zwischen beiden ergibt sich die Richtung.
+          </p>
+        </details>
+      </section>
+    </main>
+    <footer class="fuss">
+      <div class="container fuss-in">
+        <span>Browser-Arcade · Open Source</span>
+        <nav aria-label="Rechtliches">
+          <a href="./impressum.html">Impressum</a><a href="./datenschutz.html">Datenschutz</a>
+        </nav>
+      </div>
+    </footer>
+    <script type="module" src="./game.js"></script>
+  </body>
 </html>

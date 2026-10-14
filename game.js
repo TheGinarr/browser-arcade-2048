@@ -22,13 +22,18 @@
       kommt aus ../assets/storage.js und ../assets/ui.js.
    ============================================================ */
 
-import { bewegungReduziert, zahlHochzaehlen, toplisteAnzeigen, gameOverDialog } from "./assets/ui.js";
+import {
+  bewegungReduziert,
+  zahlHochzaehlen,
+  toplisteAnzeigen,
+  gameOverDialog,
+} from "./assets/ui.js";
 import { lade, speichere, entferne, spielZuruecksetzen, topliste } from "./assets/storage.js";
 
-const SPIEL = "2048";          // Schlüssel für storage.js (Ordner im localStorage)
-const GROESSE = 4;             // 4x4-Brett
-const SCHIEBE_MS = 110;        // Gleitdauer; muss zu --schiebe in spiel.css passen
-const WISCH_MINDESTWEG = 24;   // ab so vielen Pixeln zählt eine Bewegung als Wischen
+const SPIEL = "2048"; // Schlüssel für storage.js (Ordner im localStorage)
+const GROESSE = 4; // 4x4-Brett
+const SCHIEBE_MS = 110; // Gleitdauer; muss zu --schiebe in spiel.css passen
+const WISCH_MINDESTWEG = 24; // ab so vielen Pixeln zählt eine Bewegung als Wischen
 
 /* ============================================================
    TEIL 1: REINE SPIELLOGIK (ohne DOM)
@@ -61,20 +66,20 @@ export function schiebeZeileLinks(werte) {
   let punkte = 0;
 
   werte.forEach((wert, index) => {
-    if (wert === 0) return;                          // leere Felder ignorieren
+    if (wert === 0) return; // leere Felder ignorieren
     const letztes = teile[teile.length - 1];
     if (letztes && !letztes.verschmolzen && letztes.wert === wert) {
-      letztes.wert *= 2;                             // verschmelzen
-      letztes.verschmolzen = true;                   // ab jetzt gesperrt für diesen Zug
+      letztes.wert *= 2; // verschmelzen
+      letztes.verschmolzen = true; // ab jetzt gesperrt für diesen Zug
       letztes.quellen.push(index);
-      punkte += letztes.wert;                        // Standard-Regel: neuer Wert zählt als Punkte
+      punkte += letztes.wert; // Standard-Regel: neuer Wert zählt als Punkte
     } else {
       teile.push({ wert, verschmolzen: false, quellen: [index] });
     }
   });
 
   const ergebnis = teile.map((t) => t.wert);
-  while (ergebnis.length < werte.length) ergebnis.push(0);   // rechts mit Nullen auffüllen
+  while (ergebnis.length < werte.length) ergebnis.push(0); // rechts mit Nullen auffüllen
 
   const bewegt = ergebnis.some((w, i) => w !== werte[i]);
   return { ergebnis, punkte, herkunft: teile.map((t) => t.quellen), bewegt };
@@ -91,15 +96,20 @@ export function schiebeZeileLinks(werte) {
  * vier fast gleichen Schleifen.
  */
 export function linienFuer(richtung, groesse = GROESSE) {
-  const reihe = Array.from({ length: groesse }, (_, i) => i);   // [0,1,2,3]
-  const umgekehrt = [...reihe].reverse();                       // [3,2,1,0]
+  const reihe = Array.from({ length: groesse }, (_, i) => i); // [0,1,2,3]
+  const umgekehrt = [...reihe].reverse(); // [3,2,1,0]
   return reihe.map((n) => {
     switch (richtung) {
-      case "links":  return reihe.map((i) => [n, i]);           // Zeile n, von links nach rechts
-      case "rechts": return umgekehrt.map((i) => [n, i]);       // Zeile n, von rechts nach links
-      case "hoch":   return reihe.map((i) => [i, n]);           // Spalte n, von oben nach unten
-      case "runter": return umgekehrt.map((i) => [i, n]);       // Spalte n, von unten nach oben
-      default: throw new Error(`Unbekannte Richtung: ${richtung}`);
+      case "links":
+        return reihe.map((i) => [n, i]); // Zeile n, von links nach rechts
+      case "rechts":
+        return umgekehrt.map((i) => [n, i]); // Zeile n, von rechts nach links
+      case "hoch":
+        return reihe.map((i) => [i, n]); // Spalte n, von oben nach unten
+      case "runter":
+        return umgekehrt.map((i) => [i, n]); // Spalte n, von unten nach oben
+      default:
+        throw new Error(`Unbekannte Richtung: ${richtung}`);
     }
   });
 }
@@ -153,7 +163,11 @@ export function zugBerechnen(brett, richtung) {
 /** Alle freien Felder als [zeile, spalte]-Liste. */
 export function freieFelder(brett) {
   const frei = [];
-  brett.forEach((zeile, z) => zeile.forEach((wert, s) => { if (wert === 0) frei.push([z, s]); }));
+  brett.forEach((zeile, z) =>
+    zeile.forEach((wert, s) => {
+      if (wert === 0) frei.push([z, s]);
+    }),
+  );
   return frei;
 }
 
@@ -212,7 +226,10 @@ function ziffernKlasse(wert) {
 
 /** Ist das ein erlaubter Feldwert? 0 oder eine Zweierpotenz ab 2. */
 function istGueltigerWert(wert) {
-  return wert === 0 || (Number.isInteger(wert) && wert >= 2 && wert <= 2 ** 17 && Number.isInteger(Math.log2(wert)));
+  return (
+    wert === 0 ||
+    (Number.isInteger(wert) && wert >= 2 && wert <= 2 ** 17 && Number.isInteger(Math.log2(wert)))
+  );
 }
 
 /**
@@ -231,11 +248,11 @@ function spielstandLesen() {
     if (!zeile.every(istGueltigerWert)) return null;
   }
   if (!Number.isInteger(roh.punkte) || roh.punkte < 0) return null;
-  if (!zugMoeglich(roh.brett)) return null;                    // ein "totes" Brett nicht fortsetzen
-  if (freieFelder(roh.brett).length === GROESSE * GROESSE) return null;   // leeres Brett ist sinnlos
+  if (!zugMoeglich(roh.brett)) return null; // ein "totes" Brett nicht fortsetzen
+  if (freieFelder(roh.brett).length === GROESSE * GROESSE) return null; // leeres Brett ist sinnlos
 
   return {
-    brett: roh.brett.map((zeile) => [...zeile]),                // Kopie, nicht das geladene Objekt
+    brett: roh.brett.map((zeile) => [...zeile]), // Kopie, nicht das geladene Objekt
     punkte: roh.punkte,
     hinweisGezeigt: roh.hinweisGezeigt === true,
   };
@@ -257,12 +274,12 @@ function starteSpiel() {
   const ansageElement = document.getElementById("ansage");
 
   // ----- Spielzustand -----
-  let brett = leeresBrett(0);        // Zahlen: die "Wahrheit"
-  let kacheln = leeresBrett(null);   // gleiche Form, aber mit Kachel-Objekten (DOM-Seite)
+  let brett = leeresBrett(0); // Zahlen: die "Wahrheit"
+  let kacheln = leeresBrett(null); // gleiche Form, aber mit Kachel-Objekten (DOM-Seite)
   let punkte = 0;
-  let hinweisGezeigt = false;        // "2048 erreicht"-Hinweis nur EINMAL pro Spiel
-  let phase = "spielt";              // "spielt" | "hinweis" | "vorbei"
-  let runde = 0;                     // zählt Neustarts hoch (siehe verzoegert())
+  let hinweisGezeigt = false; // "2048 erreicht"-Hinweis nur EINMAL pro Spiel
+  let phase = "spielt"; // "spielt" | "hinweis" | "vorbei"
+  let runde = 0; // zählt Neustarts hoch (siehe verzoegert())
 
   /**
    * Führt `aktion` nach `ms` Millisekunden aus – aber NUR, wenn
@@ -271,7 +288,9 @@ function starteSpiel() {
    */
   function verzoegert(aktion, ms) {
     const meineRunde = runde;
-    setTimeout(() => { if (meineRunde === runde) aktion(); }, ms);
+    setTimeout(() => {
+      if (meineRunde === runde) aktion();
+    }, ms);
   }
 
   /** Wartezeit für Animationen; bei reduzierter Bewegung entfällt sie. */
@@ -299,7 +318,7 @@ function starteSpiel() {
   function kachelErzeugen(z, s, wert, mitPop) {
     const el = document.createElement("div");
     el.className = "kachel";
-    const innen = document.createElement("div");   // trägt Farbe, Zahl und Effekte
+    const innen = document.createElement("div"); // trägt Farbe, Zahl und Effekte
     el.append(innen);
 
     const kachel = { z, s, wert, el, innen };
@@ -312,8 +331,9 @@ function starteSpiel() {
 
   /** Setzt Zahl, Farbe und Schriftgröße einer Kachel passend zu ihrem Wert. */
   function kachelDarstellen(kachel) {
-    kachel.innen.className = `kachel-innen ${farbKlasse(kachel.wert)} ${ziffernKlasse(kachel.wert)}`.trim();
-    kachel.innen.textContent = kachel.wert;        // textContent: nie innerHTML mit Werten mischen
+    kachel.innen.className =
+      `kachel-innen ${farbKlasse(kachel.wert)} ${ziffernKlasse(kachel.wert)}`.trim();
+    kachel.innen.textContent = kachel.wert; // textContent: nie innerHTML mit Werten mischen
   }
 
   /** Schreibt Zeile/Spalte als CSS-Variablen; das CSS rechnet daraus den translate-Wert. */
@@ -326,9 +346,11 @@ function starteSpiel() {
   function kachelnNeuAufbauen(mitPop) {
     ebene.replaceChildren();
     kacheln = leeresBrett(null);
-    brett.forEach((zeile, z) => zeile.forEach((wert, s) => {
-      if (wert !== 0) kacheln[z][s] = kachelErzeugen(z, s, wert, mitPop);
-    }));
+    brett.forEach((zeile, z) =>
+      zeile.forEach((wert, s) => {
+        if (wert !== 0) kacheln[z][s] = kachelErzeugen(z, s, wert, mitPop);
+      }),
+    );
   }
 
   // ---------------------------------------------------------
@@ -354,7 +376,7 @@ function starteSpiel() {
   // ---------------------------------------------------------
 
   function neuesSpiel() {
-    runde++;                                        // alle wartenden Timer des alten Spiels ungültig machen
+    runde++; // alle wartenden Timer des alten Spiels ungültig machen
     brett = leeresBrett(0);
     punkte = 0;
     hinweisGezeigt = false;
@@ -381,8 +403,8 @@ function starteSpiel() {
     punkte = stand.punkte;
     hinweisGezeigt = stand.hinweisGezeigt;
     phase = "spielt";
-    kachelnNeuAufbauen(false);                      // beim Fortsetzen ohne Pop-Effekt
-    punkteElement.textContent = punkte;             // direkt setzen, kein Hochzählen nötig
+    kachelnNeuAufbauen(false); // beim Fortsetzen ohne Pop-Effekt
+    punkteElement.textContent = punkte; // direkt setzen, kein Hochzählen nötig
     seiteAktualisieren();
   }
 
@@ -396,14 +418,14 @@ function starteSpiel() {
     if (phase !== "spielt") return;
 
     const zug = zugBerechnen(brett, richtung);
-    if (!zug.bewegt) return;                        // wirkungsloser Zug: nichts passiert (wie im Original)
+    if (!zug.bewegt) return; // wirkungsloser Zug: nichts passiert (wie im Original)
 
     // --- 2. Kacheln umhängen -------------------------------
     // Wir bauen eine NEUE Kachel-Matrix, statt die alte zu verändern:
     // Beim Umhängen würden sonst Kacheln auf Felder geschrieben, aus
     // denen wir gerade noch lesen wollen.
     const neueKacheln = leeresBrett(null);
-    const verschmolzene = [];                       // { haupt, zweite } je Verschmelzung
+    const verschmolzene = []; // { haupt, zweite } je Verschmelzung
 
     for (const b of zug.bewegungen) {
       const [nz, ns] = b.nach;
@@ -411,7 +433,7 @@ function starteSpiel() {
       const haupt = kacheln[hz][hs];
       haupt.z = nz;
       haupt.s = ns;
-      positionSetzen(haupt);                        // CSS-Transition gleitet die Kachel dorthin
+      positionSetzen(haupt); // CSS-Transition gleitet die Kachel dorthin
 
       if (b.quellen.length === 2) {
         // Zwei Kacheln treffen sich: die zweite gleitet ebenfalls auf das Zielfeld ...
@@ -420,8 +442,8 @@ function starteSpiel() {
         zweite.z = nz;
         zweite.s = ns;
         positionSetzen(zweite);
-        haupt.wert = b.wert;                        // Modell sofort aktualisieren ...
-        verschmolzene.push({ haupt, zweite });      // ... Darstellung folgt nach dem Gleiten
+        haupt.wert = b.wert; // Modell sofort aktualisieren ...
+        verschmolzene.push({ haupt, zweite }); // ... Darstellung folgt nach dem Gleiten
       }
       neueKacheln[nz][ns] = haupt;
     }
@@ -433,7 +455,7 @@ function starteSpiel() {
       verzoegert(() => {
         for (const { haupt, zweite } of verschmolzene) {
           zweite.el.remove();
-          kachelDarstellen(haupt);                  // setzt className neu → Puls startet frisch
+          kachelDarstellen(haupt); // setzt className neu → Puls startet frisch
           haupt.innen.classList.add("puls");
         }
       }, animationsZeit(SCHIEBE_MS));
@@ -456,8 +478,8 @@ function starteSpiel() {
     if (!zugMoeglich(brett)) {
       spielBeenden();
     } else if (!hinweisGezeigt && hoechsteKachel(brett) >= 2048) {
-      hinweisGezeigt = true;                        // nur einmalig
-      phase = "hinweis";                            // sperrt Eingaben, bis der Nutzer wählt
+      hinweisGezeigt = true; // nur einmalig
+      phase = "hinweis"; // sperrt Eingaben, bis der Nutzer wählt
       verzoegert(overlayZeigen, animationsZeit(SCHIEBE_MS + 350));
     }
     // Erst jetzt speichern: hinweisGezeigt ist aktuell.
@@ -480,7 +502,7 @@ function starteSpiel() {
 
   function spielBeenden() {
     phase = "vorbei";
-    entferne(SPIEL, "spielstand");                  // ein beendetes Spiel soll nicht fortgesetzt werden
+    entferne(SPIEL, "spielstand"); // ein beendetes Spiel soll nicht fortgesetzt werden
     ansagen(`Spiel vorbei mit ${punkte} Punkten.`);
 
     // Kurz warten, damit man das volle Brett noch sieht
@@ -502,24 +524,29 @@ function starteSpiel() {
   // Eingabe: Tastatur
   // ---------------------------------------------------------
   const TASTEN = {
-    arrowleft: "links", a: "links",
-    arrowright: "rechts", d: "rechts",
-    arrowup: "hoch", w: "hoch",
-    arrowdown: "runter", s: "runter",
+    arrowleft: "links",
+    a: "links",
+    arrowright: "rechts",
+    d: "rechts",
+    arrowup: "hoch",
+    w: "hoch",
+    arrowdown: "runter",
+    s: "runter",
   };
 
   document.addEventListener("keydown", (e) => {
-    if (e.ctrlKey || e.metaKey || e.altKey) return;            // Browser-Kürzel nicht stören
-    if (document.querySelector("dialog[open]")) return;        // Game-Over-Dialog offen → Tasten gehören ihm
+    if (e.ctrlKey || e.metaKey || e.altKey) return; // Browser-Kürzel nicht stören
+    if (document.querySelector("dialog[open]")) return; // Game-Over-Dialog offen → Tasten gehören ihm
     if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
 
-    if (phase === "hinweis" && e.key === "Escape") {           // Esc im Overlay = Weiterspielen
+    if (phase === "hinweis" && e.key === "Escape") {
+      // Esc im Overlay = Weiterspielen
       weiterspielen();
       return;
     }
     const richtung = TASTEN[e.key?.toLowerCase()];
     if (!richtung) return;
-    e.preventDefault();                                        // Pfeiltasten sollen nicht die Seite scrollen
+    e.preventDefault(); // Pfeiltasten sollen nicht die Seite scrollen
     zugAusfuehren(richtung);
   });
 
@@ -536,11 +563,15 @@ function starteSpiel() {
   let wischStartY = 0;
 
   brettElement.addEventListener("pointerdown", (e) => {
-    if (e.pointerType === "mouse" && e.button !== 0) return;   // nur linke Maustaste
+    if (e.pointerType === "mouse" && e.button !== 0) return; // nur linke Maustaste
     wischId = e.pointerId;
     wischStartX = e.clientX;
     wischStartY = e.clientY;
-    try { brettElement.setPointerCapture(e.pointerId); } catch { /* nicht kritisch */ }
+    try {
+      brettElement.setPointerCapture(e.pointerId);
+    } catch {
+      /* nicht kritisch */
+    }
   });
 
   brettElement.addEventListener("pointerup", (e) => {
@@ -548,7 +579,7 @@ function starteSpiel() {
     wischId = null;
     const dx = e.clientX - wischStartX;
     const dy = e.clientY - wischStartY;
-    if (Math.max(Math.abs(dx), Math.abs(dy)) < WISCH_MINDESTWEG) return;   // nur ein Tippen
+    if (Math.max(Math.abs(dx), Math.abs(dy)) < WISCH_MINDESTWEG) return; // nur ein Tippen
     if (Math.abs(dx) > Math.abs(dy)) {
       zugAusfuehren(dx > 0 ? "rechts" : "links");
     } else {
@@ -556,7 +587,9 @@ function starteSpiel() {
     }
   });
 
-  brettElement.addEventListener("pointercancel", () => { wischId = null; });
+  brettElement.addEventListener("pointercancel", () => {
+    wischId = null;
+  });
 
   // ---------------------------------------------------------
   // Knöpfe
@@ -566,9 +599,9 @@ function starteSpiel() {
   document.getElementById("overlay-neu").addEventListener("click", neuesSpiel);
 
   document.getElementById("reset").addEventListener("click", () => {
-    spielZuruecksetzen(SPIEL);       // löscht Topliste UND Spielstand
-    neuesSpiel();                    // laufendes Spiel gehört zum Spielstand → frisch starten
-    seiteAktualisieren();            // leere Topliste + "Bester" 0 anzeigen
+    spielZuruecksetzen(SPIEL); // löscht Topliste UND Spielstand
+    neuesSpiel(); // laufendes Spiel gehört zum Spielstand → frisch starten
+    seiteAktualisieren(); // leere Topliste + "Bester" 0 anzeigen
   });
 
   // ---------------------------------------------------------
